@@ -21,7 +21,6 @@ services:
   - type: web
     name: n3-bakers-frontend
     runtime: static
-    plan: free
     rootDir: frontend
     buildCommand: npm ci && npx expo export --platform web --output-dir dist
     staticPublishPath: ./frontend/dist
