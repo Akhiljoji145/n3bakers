@@ -18,6 +18,17 @@ services:
         fromDatabase:
           name: n3-bakers-db
           property: connectionString
+  - type: web
+    name: n3-bakers-frontend
+    runtime: static
+    plan: free
+    rootDir: frontend
+    buildCommand: npm ci && npx expo export --platform web --output-dir dist
+    staticPublishPath: ./frontend/dist
+    pullRequestPreviewsEnabled: false
+    envVars:
+      - key: EXPO_PUBLIC_API_URL
+        sync: false
 
 databases:
   - name: n3-bakers-db

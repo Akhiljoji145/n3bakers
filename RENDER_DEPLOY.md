@@ -1,6 +1,6 @@
 # Render Deploy
 
-This repo is set up to deploy the Django backend to Render.
+This repo is set up to deploy both the Django backend and the Expo web frontend to Render.
 
 ## Files added
 
@@ -12,9 +12,10 @@ This repo is set up to deploy the Django backend to Render.
 ## What Render will deploy
 
 - Service: Django backend in `backend/`
+- Service: Expo web frontend in `frontend/`
 - Database: Render PostgreSQL
 
-The Expo frontend is not deployed to Render as a mobile app. After the backend is live, point the frontend API URL to the Render backend.
+The mobile Expo app is not deployed to Render as a mobile binary. Render hosts the web export of the frontend.
 
 ## Local preparation on Windows
 
@@ -42,14 +43,14 @@ This will:
 3. Create a new Blueprint and connect the repository.
 4. Render will detect `render.yaml`.
 5. Apply the Blueprint.
-6. Wait for the backend web service and Postgres database to finish provisioning.
-7. Create a Render `Static Site` for the frontend with:
+6. Render will create:
+   - the backend web service
+   - the frontend static site
+   - the Postgres database
+7. During Blueprint setup, provide `EXPO_PUBLIC_API_URL` for the frontend service:
 
 ```text
-Root Directory: frontend
-Build Command: npm ci && npx expo export --platform web --output-dir dist
-Publish Directory: dist
-Start Command: leave empty
+https://n3-bakers-api.onrender.com/api/
 ```
 
 ## Important environment values
@@ -95,13 +96,13 @@ Set `DEMO_USER_PASSWORD` in Render if you want a different value.
 https://n3-bakers-api.onrender.com
 ```
 
-4. In the frontend, set:
+4. In the frontend service env vars, set:
 
 ```text
 EXPO_PUBLIC_API_URL=https://n3-bakers-api.onrender.com/api/
 ```
 
-If deploying the frontend as a Render Static Site, add `EXPO_PUBLIC_API_URL` in the frontend service environment settings before building.
+Render will prompt for `EXPO_PUBLIC_API_URL` during the initial Blueprint creation because it is marked `sync: false` in `render.yaml`.
 
 ## Notes
 

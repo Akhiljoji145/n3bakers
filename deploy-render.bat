@@ -72,12 +72,10 @@ echo Render deploy preparation completed for backend and frontend.
 echo Next steps:
 echo 1. Commit and push your code.
 echo 2. In Render, create a Blueprint from render.yaml.
-echo 3. Create a Static Site for the frontend with:
-echo    Root Directory: frontend
-echo    Build Command: npm ci ^&^& npx expo export --platform web --output-dir dist
-echo    Publish Directory: dist
-echo    Start Command: leave empty
-echo 4. Set EXPO_PUBLIC_API_URL in Render frontend env vars to your backend URL.
+echo 3. The Blueprint will create both:
+echo    - Backend web service
+echo    - Frontend static site
+echo 4. During Blueprint setup, enter EXPO_PUBLIC_API_URL for the frontend service.
 echo.
 
 endlocal
