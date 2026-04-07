@@ -36,6 +36,10 @@ echo Applying migrations locally
 python manage.py migrate
 if errorlevel 1 exit /b 1
 
+echo Seeding demo users
+python manage.py seed_demo_users
+if errorlevel 1 exit /b 1
+
 echo Collecting static files
 python manage.py collectstatic --noinput
 if errorlevel 1 exit /b 1

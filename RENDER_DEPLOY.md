@@ -30,6 +30,7 @@ This will:
 - install backend dependencies
 - run `python manage.py check`
 - run migrations locally
+- create the demo login users
 - collect static files
 
 ## Deploy on Render
@@ -55,15 +56,28 @@ Optional env vars you can add later in Render if needed:
 - `ALLOWED_HOSTS`
 - `CSRF_TRUSTED_ORIGINS`
 - `CORS_ALLOWED_ORIGINS`
+- `DEMO_USER_PASSWORD`
+- `DEMO_BRANCH_NAME`
+- `DEMO_BRANCH_LOCATION`
 
 ## After deploy
 
-1. Open the Render Shell for the web service.
-2. Create an admin user:
+1. The deploy automatically seeds these users:
 
-```bash
-python manage.py createsuperuser
+```text
+admin_test
+manager_test
+baker_test
+customer_test
 ```
+
+2. Default password:
+
+```text
+password123
+```
+
+Set `DEMO_USER_PASSWORD` in Render if you want a different value.
 
 3. Copy your Render backend URL, for example:
 
