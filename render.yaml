@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: n3-bakers-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: ./build.sh
+    startCommand: python -m gunicorn n3_backend.asgi:application -k uvicorn.workers.UvicornWorker
+    healthCheckPath: /admin/login/
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      - key: SECRET_KEY
+        generateValue: true
+      - key: WEB_CONCURRENCY
+        value: 4
+      - key: DATABASE_URL
+        fromDatabase:
+          name: n3-bakers-db
+          property: connectionString
+
+databases:
+  - name: n3-bakers-db
+    plan: free
+    databaseName: n3bakers
+    user: n3bakers
