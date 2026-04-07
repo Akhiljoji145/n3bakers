@@ -23,7 +23,7 @@ services:
     runtime: static
     rootDir: frontend
     buildCommand: npm ci && npx expo export --platform web --output-dir dist
-    staticPublishPath: ./frontend/dist
+    staticPublishPath: ./dist
     pullRequestPreviewsEnabled: false
     envVars:
       - key: EXPO_PUBLIC_API_URL
