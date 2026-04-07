@@ -7,7 +7,7 @@ This repo is set up to deploy the Django backend to Render.
 - `render.yaml`: Render Blueprint definition
 - `backend/build.sh`: Render build script
 - `backend/requirements.txt`: Python dependencies for Render
-- `deploy-render.bat`: Windows helper to validate the backend locally before pushing
+- `deploy-render.bat`: Windows helper to validate the backend and frontend locally before pushing
 
 ## What Render will deploy
 
@@ -32,6 +32,8 @@ This will:
 - run migrations locally
 - create the demo login users
 - collect static files
+- install frontend dependencies
+- build the Expo web export to `frontend\dist`
 
 ## Deploy on Render
 
@@ -40,7 +42,15 @@ This will:
 3. Create a new Blueprint and connect the repository.
 4. Render will detect `render.yaml`.
 5. Apply the Blueprint.
-6. Wait for the web service and Postgres database to finish provisioning.
+6. Wait for the backend web service and Postgres database to finish provisioning.
+7. Create a Render `Static Site` for the frontend with:
+
+```text
+Root Directory: frontend
+Build Command: npm ci && npx expo export --platform web --output-dir dist
+Publish Directory: dist
+Start Command: leave empty
+```
 
 ## Important environment values
 
@@ -90,6 +100,8 @@ https://n3-bakers-api.onrender.com
 ```text
 EXPO_PUBLIC_API_URL=https://n3-bakers-api.onrender.com/api/
 ```
+
+If deploying the frontend as a Render Static Site, add `EXPO_PUBLIC_API_URL` in the frontend service environment settings before building.
 
 ## Notes
 
