@@ -1,12 +1,10 @@
-services:
-  # 1. PostgreSQL Database
-  - type: database
-    name: n3bakers-db
+databases:
+  - name: n3bakers-db
     plan: free
     databaseName: n3bakers
     user: n3bakers_user
 
-  # 2. Backend (Django)
+services:
   - type: web
     name: n3bakers-backend
     plan: free
