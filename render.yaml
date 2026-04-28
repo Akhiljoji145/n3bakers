@@ -41,7 +41,7 @@ services:
     env: static
     rootDir: frontend
     buildCommand: npm install && npm run build
-    publishDir: dist
+    staticPublishDir: dist
     envVars:
       - key: EXPO_PUBLIC_API_URL
         value: https://n3bakers-backend.onrender.com/api/
