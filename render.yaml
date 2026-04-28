@@ -38,10 +38,10 @@ services:
   - type: web
     name: n3bakers-frontend
     plan: free
-    env: static
+    runtime: static
     rootDir: frontend
     buildCommand: npm install && npm run build
-    staticPublishDir: dist
+    staticPublishPath: dist
     envVars:
       - key: EXPO_PUBLIC_API_URL
         value: https://n3bakers-backend.onrender.com/api/
