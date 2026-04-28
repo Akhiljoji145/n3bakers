@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "framework": "expo",
+  "buildCommand": "npx expo export --platform web",
+  "outputDirectory": "dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "env": {
+    "EXPO_PUBLIC_API_URL": "https://n3bakers-backend.onrender.com/api/"
+  }
+}
