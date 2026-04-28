@@ -26,7 +26,7 @@ services:
       - key: ALLOWED_HOSTS
         value: "*" # Update this with your custom domain later if needed
       - key: PYTHON_VERSION
-        value: 3.11.0 # Or your preferred version
+        value: 3.14.13 # Or your preferred version
       - key: ADMIN_USERNAME
         value: admin
       - key: ADMIN_EMAIL
