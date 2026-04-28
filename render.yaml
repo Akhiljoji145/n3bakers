@@ -1,0 +1,51 @@
+services:
+  # 1. PostgreSQL Database
+  - type: database
+    name: n3bakers-db
+    plan: free
+    databaseName: n3bakers
+    user: n3bakers_user
+
+  # 2. Backend (Django)
+  - type: web
+    name: n3bakers-backend
+    plan: free
+    env: python
+    rootDir: backend
+    buildCommand: ./build.sh
+    startCommand: gunicorn n3_backend.wsgi:application
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: n3bakers-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: RENDER
+        value: "True"
+      - key: ALLOWED_HOSTS
+        value: "*" # Update this with your custom domain later if needed
+      - key: PYTHON_VERSION
+        value: 3.11.0 # Or your preferred version
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_EMAIL
+        value: admin@n3bakers.com
+      - key: ADMIN_PASSWORD
+        generateValue: true
+
+  # 3. Frontend (Expo Web)
+  - type: web
+    name: n3bakers-frontend
+    plan: free
+    env: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    publishDir: dist
+    envVars:
+      - key: EXPO_PUBLIC_API_URL
+        value: https://n3bakers-backend.onrender.com/api/
+        # Note: Render provides the host. You might need to prepend https://
+        # For a more robust setup, we can use a rewrite rule or handle it in code.
