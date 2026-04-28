@@ -80,14 +80,13 @@ WSGI_APPLICATION = "n3_backend.wsgi.application"
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
-# If DATABASE_URL is set but looks invalid (like just '://'), clear it so we use the default
+# If DATABASE_URL is set but looks invalid (like just '://'), clear it from environ
 if DATABASE_URL and (not "://" in DATABASE_URL or DATABASE_URL.startswith("://")):
-    DATABASE_URL = None
+    os.environ.pop("DATABASE_URL", None)
 
 DATABASES = {
     "default": dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        url=DATABASE_URL,
         conn_max_age=600,
     )
 }
