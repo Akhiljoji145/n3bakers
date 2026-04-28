@@ -1,41 +1,61 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
-import { BottomNavigation, Appbar, useTheme } from 'react-native-paper';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { BottomNavigation, Appbar, Text, Icon, useTheme } from 'react-native-paper';
 
 // Imports for Manager Tabs
-import POSBillingScreen from './manager/POSBillingScreen';
 import OrderManagementScreen from './manager/OrderManagementScreen';
 import ManagerInventoryScreen from './manager/ManagerInventoryScreen';
 import ManagerReportsScreen from './manager/ManagerReportsScreen';
+import NotificationCenter from './NotificationCenter';
+import useNotifications from '../hooks/useNotifications';
+import useAutoRefresh from '../hooks/useAutoRefresh';
 
-const ManagerDashboard = ({ onLogout }) => {
+const ManagerDashboard = ({ onLogout, user, activeRole, onSwitchRole }) => {
     const theme = useTheme();
     const [index, setIndex] = useState(0);
+
+    // Background polling and sound logic
+    // This hook fetches notifications every 15s and plays sound for new ones
+    const { unreadCount } = useNotifications({ limit: 5 });
+
     const [routes] = useState([
-        { key: 'pos', title: 'POS Billing', focusedIcon: 'cash-register' },
         { key: 'orders', title: 'Orders', focusedIcon: 'clipboard-list' },
         { key: 'inventory', title: 'Inventory', focusedIcon: 'warehouse' },
         { key: 'reports', title: 'Reports', focusedIcon: 'chart-bar' },
+        { key: 'notifications', title: 'Alerts', focusedIcon: 'bell' },
     ]);
 
     const renderScene = BottomNavigation.SceneMap({
-        pos: () => <POSBillingScreen />,
         orders: () => <OrderManagementScreen />,
         inventory: () => <ManagerInventoryScreen />,
         reports: () => <ManagerReportsScreen />,
+        notifications: () => <NotificationCenter />,
     });
 
-    const getHeaderTitle = () => {
-        return routes[index].title;
-    };
+    const getHeaderTitle = () => routes[index].title;
 
     return (
         <View style={styles.container}>
             <Appbar.Header style={styles.header}>
-                <Appbar.Content title={`Manager - ${getHeaderTitle()}`} titleStyle={styles.headerTitle} />
+                <Appbar.Content
+                    title={`Manager - ${getHeaderTitle()}`}
+                    titleStyle={styles.headerTitle}
+                />
+                {onSwitchRole && (
+                    <TouchableOpacity
+                        onPress={onSwitchRole}
+                        style={styles.switchRoleBtn}
+                        activeOpacity={0.8}
+                    >
+                        <Icon source="swap-horizontal" size={14} color="#4D96FF" />
+                        <Text style={styles.switchRoleBtnText}>
+                            {user.role === activeRole ? user.secondary_role : user.role}
+                        </Text>
+                    </TouchableOpacity>
+                )}
                 <Appbar.Action icon="logout" onPress={onLogout} />
             </Appbar.Header>
-            
+
             <BottomNavigation
                 navigationState={{ index, routes }}
                 onIndexChange={setIndex}
@@ -66,14 +86,32 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#1E293B',
     },
+    switchRoleBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
+        backgroundColor: '#EFF6FF',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 999,
+        marginRight: 4,
+        borderWidth: 1,
+        borderColor: '#BFDBFE',
+    },
+    switchRoleBtnText: {
+        fontSize: 11,
+        fontWeight: '800',
+        color: '#4D96FF',
+        letterSpacing: 0.4,
+    },
     bottomBar: {
         backgroundColor: '#FFFFFF',
         borderTopWidth: 1,
         borderTopColor: '#E2E8F0',
     },
     activeIndicator: {
-        backgroundColor: '#FFF7ED', // Light orange matching primary theme generally
-    }
+        backgroundColor: '#FFF7ED',
+    },
 });
 
 export default ManagerDashboard;

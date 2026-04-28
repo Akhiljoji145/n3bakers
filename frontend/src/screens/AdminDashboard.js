@@ -7,6 +7,7 @@ import client from '../api/client';
 import BranchManagement from './admin/BranchManagement';
 import StaffManagement from './admin/StaffManagement';
 import ProductManagement from './admin/ProductManagement';
+import CategoryManagement from './admin/CategoryManagement';
 import RecipeManagement from './admin/RecipeManagement';
 import InventoryMonitoring from './admin/InventoryMonitoring';
 import OrderGlobalView from './admin/OrderGlobalView';
@@ -15,7 +16,9 @@ import DeliveryMonitoring from './admin/DeliveryMonitoring';
 import PaymentMonitoring from './admin/PaymentMonitoring';
 import AnalyticsReports from './admin/AnalyticsReports';
 import ProductionInsights from './admin/ProductionInsights';
-import NotificationControl from './admin/NotificationControl';
+import NotificationCenter from './NotificationCenter';
+import useNotifications from '../hooks/useNotifications';
+import useAutoRefresh from '../hooks/useAutoRefresh';
 
 const INSIGHT_MODULE_IDS = ['analytics', 'production'];
 
@@ -23,6 +26,7 @@ const MODULES = [
     { id: 'branch', title: 'Branch\nManagement', icon: 'store', component: BranchManagement, color: '#FF7B54' },
     { id: 'staff', title: 'Staff\nManagement', icon: 'account-group', component: StaffManagement, color: '#4D96FF' },
     { id: 'products', title: 'Products\nControl', icon: 'package-variant', component: ProductManagement, color: '#9D4EDD' },
+    { id: 'categories', title: 'Categories', icon: 'tag-multiple', component: CategoryManagement, color: '#7C3AED' },
     { id: 'recipe', title: 'Ingredients\n& Recipes', icon: 'chef-hat', component: RecipeManagement, color: '#F4A261' },
     { id: 'inventory', title: 'Inventory\nMonitoring', icon: 'warehouse', component: InventoryMonitoring, color: '#2A9D8F' },
     { id: 'orders', title: 'Global\nOrders', icon: 'cart', component: OrderGlobalView, color: '#E76F51' },
@@ -31,7 +35,7 @@ const MODULES = [
     { id: 'payment', title: 'Payment\nMonitoring', icon: 'credit-card', component: PaymentMonitoring, color: '#FCA311' },
     { id: 'analytics', title: 'Analytics\n& Reports', icon: 'chart-bar', component: AnalyticsReports, color: '#118AB2' },
     { id: 'production', title: 'Production\nInsights', icon: 'trending-up', component: ProductionInsights, color: '#06D6A0' },
-    { id: 'notifications', title: 'Alerts &\nNotifications', icon: 'bell', component: NotificationControl, color: '#EF476F' },
+    { id: 'notifications', title: 'Alerts &\nNotifications', icon: 'bell', component: NotificationCenter, color: '#EF476F' },
 ];
 
 const clampScore = (value) => Math.max(0, Math.min(100, Math.round(value)));
@@ -93,10 +97,16 @@ const getProductionInsight = (plan) => {
     };
 };
 
-const AdminDashboard = ({ onLogout }) => {
+const AdminDashboard = ({ onLogout, user, activeRole, onSwitchRole }) => {
     const theme = useTheme();
     const [tabIndex, setTabIndex] = useState(0);
     const [activeModule, setActiveModule] = useState(null);
+    const [catalogVersion, setCatalogVersion] = useState(0);
+
+    // Background polling and sound logic
+    // This hook fetches notifications every 15s and plays sound for new ones
+    const { unreadCount: backgroundUnreadCount } = useNotifications({ limit: 5 });
+
     const [insights, setInsights] = useState({
         analytics: { loading: true, score: 0, title: 'Analytics Insight', detail: 'Loading analytics data...' },
         production: { loading: true, score: 0, title: 'Production Insight', detail: 'Loading production data...' },
@@ -105,8 +115,11 @@ const AdminDashboard = ({ onLogout }) => {
         { key: 'home', title: 'Home', focusedIcon: 'view-dashboard' },
         { key: 'branch', title: 'Branch', focusedIcon: 'store' },
         { key: 'staff', title: 'Staff', focusedIcon: 'account-group' },
+        { key: 'products', title: 'Products', focusedIcon: 'package-variant' },
+        { key: 'categories', title: 'Categories', focusedIcon: 'tag-multiple' },
         { key: 'inventory', title: 'Inventory', focusedIcon: 'warehouse' },
         { key: 'orders', title: 'Orders', focusedIcon: 'cart' },
+        { key: 'notifications', title: 'Alerts', focusedIcon: 'bell' },
     ]);
 
     useEffect(() => {
@@ -145,6 +158,10 @@ const AdminDashboard = ({ onLogout }) => {
     };
 
     const insightModules = MODULES.filter((mod) => INSIGHT_MODULE_IDS.includes(mod.id));
+
+    const refreshCatalogScreens = () => {
+        setCatalogVersion((version) => version + 1);
+    };
 
     const renderInsightCards = () => (
         <View style={styles.insightSection}>
@@ -208,10 +225,16 @@ const AdminDashboard = ({ onLogout }) => {
                 return <BranchManagement />;
             case 'staff':
                 return <StaffManagement />;
+            case 'products':
+                return <ProductManagement catalogVersion={catalogVersion} />;
+            case 'categories':
+                return <CategoryManagement onCatalogChange={refreshCatalogScreens} />;
             case 'inventory':
                 return <InventoryMonitoring />;
             case 'orders':
                 return <OrderGlobalView />;
+            case 'notifications':
+                return <NotificationCenter />;
             default:
                 return null;
         }
@@ -224,13 +247,18 @@ const AdminDashboard = ({ onLogout }) => {
     const renderActiveModule = () => {
         if (!activeModule) return null;
         const ActiveComponent = activeModule.component;
+        const activeModuleProps = activeModule.id === 'products'
+            ? { catalogVersion }
+            : activeModule.id === 'categories'
+                ? { onCatalogChange: refreshCatalogScreens }
+                : {};
         return (
             <View style={styles.moduleContainer}>
                 <Appbar.Header style={styles.moduleHeader}>
                     <Appbar.BackAction onPress={() => setActiveModule(null)} />
                     <Appbar.Content title={activeModule.title.replace('\n', ' ')} />
                 </Appbar.Header>
-                <ActiveComponent />
+                <ActiveComponent {...activeModuleProps} />
             </View>
         );
     };
@@ -243,6 +271,14 @@ const AdminDashboard = ({ onLogout }) => {
                 <>
                     <Appbar.Header style={styles.mainHeader}>
                         <Appbar.Content title={getHeaderTitle()} titleStyle={styles.mainHeaderTitle} />
+                        {onSwitchRole && (
+                            <TouchableOpacity onPress={onSwitchRole} style={styles.switchRoleBtn} activeOpacity={0.8}>
+                                <Icon source="swap-horizontal" size={14} color="#4D96FF" />
+                                <Text style={styles.switchRoleBtnText}>
+                                    {user.role === activeRole ? user.secondary_role : user.role}
+                                </Text>
+                            </TouchableOpacity>
+                        )}
                         <Appbar.Action icon="logout" onPress={onLogout} />
                     </Appbar.Header>
 
@@ -276,6 +312,24 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#1E293B',
     },
+    switchRoleBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
+        backgroundColor: '#EFF6FF',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 999,
+        marginRight: 4,
+        borderWidth: 1,
+        borderColor: '#BFDBFE',
+    },
+    switchRoleBtnText: {
+        fontSize: 11,
+        fontWeight: '800',
+        color: '#4D96FF',
+        letterSpacing: 0.4,
+    },
     gridContainer: {
         padding: 20,
         paddingBottom: 40,
@@ -290,6 +344,13 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 10,
         elevation: 5,
+    },
+    heroTitle: {
+        color: '#FFFFFF',
+        fontSize: 24,
+        fontWeight: '800',
+        marginBottom: 8,
+        letterSpacing: 0.5,
     },
     heroTitle: {
         color: '#FFFFFF',

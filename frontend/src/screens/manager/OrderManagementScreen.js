@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Platform } from 'react-native';
 import { Card, Title, Text, Button, List, ActivityIndicator, Chip, Icon } from 'react-native-paper';
 import client from '../../api/client';
+import useAutoRefresh from '../../hooks/useAutoRefresh';
 
 const OrderManagementScreen = () => {
     const [orders, setOrders] = useState([]);
@@ -11,12 +12,19 @@ const OrderManagementScreen = () => {
         fetchOrders();
     }, []);
 
-    const fetchOrders = async () => {
-        setLoading(true);
+    useAutoRefresh(() => {
+        fetchOrders({ silent: true });
+    });
+
+    const fetchOrders = async ({ silent = false } = {}) => {
+        if (!silent) setLoading(true);
         try {
             const response = await client.get('orders/orders/');
-            // Optionally filter on frontend if backend doesn't filter perfectly yet
-            setOrders(response.data.filter(o => o.status !== 'DELIVERED' && o.status !== 'CANCELLED' && o.payment_status === true));
+            // Managers should see every active branch order, including counter-pay orders.
+            setOrders(
+                (Array.isArray(response.data) ? response.data : [])
+                    .filter(o => o.status !== 'DELIVERED' && o.status !== 'CANCELLED')
+            );
         } catch (e) {
             console.error('Fetch orders error', e);
         } finally {
@@ -80,7 +88,7 @@ const OrderManagementScreen = () => {
                             <List.Accordion
                                 key={order.id}
                                 title={`Order #${order.id} - ₹${order.total_amount}`}
-                                description={`Type: ${order.order_type} | Placed: ${new Date(order.created_at).toLocaleTimeString()}`}
+                                description={(order.items || []).map(i => `${i.product_name} x ${i.quantity}`).join(', ') || 'No items'}
                                 left={props => <View style={styles.iconBox}><Icon source="receipt" size={24} color="#64748B" /></View>}
                                 style={[styles.accordion, { borderLeftColor: getStatusColor(order.status) }]}
                                 titleStyle={styles.orderTitle}
@@ -91,14 +99,20 @@ const OrderManagementScreen = () => {
                                         <Chip style={{ backgroundColor: `${getStatusColor(order.status)}20`, marginHorizontal: 8 }} textStyle={{ color: getStatusColor(order.status), fontWeight: 'bold' }}>
                                             {order.status}
                                         </Chip>
+                                        <Chip style={{ backgroundColor: order.payment_status ? '#D1FAE5' : '#FEF3C7' }} textStyle={{ color: order.payment_status ? '#059669' : '#B45309', fontWeight: 'bold' }}>
+                                            {order.payment_status ? 'Paid' : 'Unpaid'}
+                                        </Chip>
                                     </View>
                                     
                                     <View style={styles.itemsList}>
                                         <Text style={[styles.detailText, { marginBottom: 4, fontWeight: 'bold' }]}>Order Items:</Text>
-                                        {order.items.map((item, idx) => (
-                                            <Text key={idx} style={styles.itemRow}>• {item.quantity}x Custom Product ID#{item.product}</Text>
-                                            // In a real app we expand the serializer to send product names, currently it's just the ID
-                                        ))}
+                                        {(order.items || []).length === 0 ? (
+                                            <Text style={styles.itemRow}>No items attached to this order.</Text>
+                                        ) : (
+                                            (order.items || []).map((item, idx) => (
+                                                <Text key={idx} style={styles.itemRow}>• {item.quantity}x {item.product_name}</Text>
+                                            ))
+                                        )}
                                     </View>
 
                                     <View style={styles.actions}>
@@ -109,7 +123,22 @@ const OrderManagementScreen = () => {
                                             <Button mode="contained" buttonColor="#10B981" onPress={() => updateOrderStatus(order.id, 'READY')}>Mark Ready</Button>
                                         )}
                                         {order.status === 'READY' && (
-                                            <Button mode="contained" buttonColor="#64748B" onPress={() => updateOrderStatus(order.id, 'DELIVERED')}>Mark Delivered / Handed Over</Button>
+                                            <Button 
+                                                mode="contained" 
+                                                buttonColor="#10B981" 
+                                                icon="check-decagram"
+                                                onPress={async () => {
+                                                    try {
+                                                        await client.post(`orders/orders/${order.id}/confirm-pickup/`);
+                                                        fetchOrders();
+                                                    } catch (e) {
+                                                        console.error('Confirm pickup failed', e);
+                                                        if (Platform.OS === 'web') alert("Failed to confirm handover.");
+                                                    }
+                                                }}
+                                            >
+                                                Confirm Handover to Customer
+                                            </Button>
                                         )}
                                     </View>
                                 </View>

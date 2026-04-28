@@ -108,7 +108,7 @@ const InventoryMonitoring = () => {
                                             </Text>
                                         </View>
                                         <Card.Content style={styles.cardContent}>
-                                            <Text style={styles.ingredientName} numberOfLines={2}>{name}</Text>
+                                            <Text style={styles.ingredientName}>{name}</Text>
                                             <Text style={styles.branchLabel}>Branch #{item.branch}</Text>
                                             <View style={styles.qtyRow}>
                                                 <Text style={[styles.qtyNum, { color: isLow ? '#DC2626' : '#059669' }]}>

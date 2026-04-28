@@ -1,8 +1,14 @@
 from rest_framework import generics, permissions, viewsets
 from django.contrib.auth import get_user_model
-from .serializers import UserSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+from .serializers import EmailOrUsernameTokenObtainPairSerializer, UserSerializer
 
 User = get_user_model()
+
+
+class EmailOrUsernameTokenObtainPairView(TokenObtainPairView):
+    serializer_class = EmailOrUsernameTokenObtainPairSerializer
 
 class IsAdminUserOrReadOnly(permissions.BasePermission):
     def has_permission(self, request, view):
@@ -16,9 +22,12 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsAdminUserOrReadOnly]
 
     def get_queryset(self):
-        if self.request.user.role == 'ADMIN':
+        user = self.request.user
+        if user.role == 'ADMIN':
             return User.objects.all()
-        return User.objects.filter(id=self.request.user.id)
+        if user.role == 'MANAGER':
+            return User.objects.filter(branch=user.branch)
+        return User.objects.filter(id=user.id)
 
 class CreateUserView(generics.CreateAPIView):
     model = User

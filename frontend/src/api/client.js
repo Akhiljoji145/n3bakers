@@ -37,9 +37,26 @@ const client = axios.create({
     },
 });
 
+let logoutCallback = null;
+
+export const setLogoutCallback = (callback) => {
+    logoutCallback = callback;
+};
+
+const handleLogout = async () => {
+    await AsyncStorage.multiRemove(['access_token', 'refresh_token', 'user']);
+    if (logoutCallback) {
+        logoutCallback();
+    }
+};
+
+const isAuthUrl = (url) => {
+    return url && (url.includes('token/') || url.includes('token/refresh/'));
+};
+
 client.interceptors.request.use(async (config) => {
     const token = await AsyncStorage.getItem('access_token');
-    if (token) {
+    if (token && !config.headers.Authorization) {
         config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -49,16 +66,28 @@ client.interceptors.request.use(async (config) => {
 
 client.interceptors.response.use(
     (response) => response,
-    (error) => {
-        if (__DEV__) {
-            console.error('API request failed', {
-                baseURL: error.config?.baseURL,
-                url: error.config?.url,
-                method: error.config?.method,
-                status: error.response?.status,
-                data: error.response?.data,
-                message: error.message,
-            });
+    async (error) => {
+        const originalRequest = error.config;
+
+        if (error.response?.status === 401 && !originalRequest._retry && !isAuthUrl(originalRequest.url)) {
+            originalRequest._retry = true;
+            try {
+                const refreshToken = await AsyncStorage.getItem('refresh_token');
+                if (!refreshToken) throw new Error('No refresh token');
+
+                const refreshResponse = await axios.post(`${API_BASE_URL}token/refresh/`, {
+                    refresh: refreshToken,
+                });
+
+                const { access } = refreshResponse.data;
+                await AsyncStorage.setItem('access_token', access);
+
+                originalRequest.headers.Authorization = `Bearer ${access}`;
+                return client(originalRequest);
+            } catch (refreshError) {
+                await handleLogout();
+                return Promise.reject(refreshError);
+            }
         }
         return Promise.reject(error);
     }

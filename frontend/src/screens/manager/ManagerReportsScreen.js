@@ -34,7 +34,7 @@ const ManagerReportsScreen = () => {
     completedOrders.forEach(order => {
         order.items.forEach(item => {
             if (!itemMap[item.product]) {
-                itemMap[item.product] = { id: item.product, count: 0, revenue: 0 };
+                itemMap[item.product] = { id: item.product, name: item.product_name, count: 0, revenue: 0 };
             }
             itemMap[item.product].count += item.quantity;
             itemMap[item.product].revenue += (parseFloat(item.price_at_order) * item.quantity);
@@ -86,7 +86,7 @@ const ManagerReportsScreen = () => {
                                                 <Text style={styles.rankText}>#{index + 1}</Text>
                                             </View>
                                             <View style={styles.itemDetails}>
-                                                <Text style={styles.itemName}>Product ID#{item.id}</Text>
+                                                <Text style={styles.itemName}>{item.name}</Text>
                                                 <Text style={styles.itemSub}>Revenue generated: ₹{item.revenue.toFixed(2)}</Text>
                                             </View>
                                             <Text style={styles.itemCount}>{item.count} Sold</Text>

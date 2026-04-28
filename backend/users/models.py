@@ -20,6 +20,12 @@ class User(AbstractUser):
         blank=True,
         related_name='staff'
     )
+    secondary_role = models.CharField(
+        max_length=20,
+        choices=UserRole.choices,
+        null=True,
+        blank=True,
+    )
 
     def __str__(self):
         return f"{self.username} ({self.role})"

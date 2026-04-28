@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { Appbar, List, Button, Title, Paragraph, IconButton, Divider, Searchbar, Dialog, Portal, TextInput } from 'react-native-paper';
+import { View, StyleSheet, ScrollView, Alert, TouchableOpacity, Image, useWindowDimensions } from 'react-native';
+import { Appbar, List, Button, Title, Paragraph, IconButton, Divider, Searchbar, Dialog, Portal, TextInput, Text } from 'react-native-paper';
 import client from '../api/client';
 
 const POSScreen = ({ onClose }) => {
+    const { width } = useWindowDimensions();
     const [products, setProducts] = useState([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [cart, setCart] = useState([]);
@@ -99,18 +100,36 @@ const POSScreen = ({ onClose }) => {
                         style={styles.searchbar}
                     />
                     <ScrollView contentContainerStyle={styles.productGrid}>
-                        {filteredProducts.map(product => (
-                            <Button 
-                                key={product.id} 
-                                mode="outlined" 
-                                style={styles.productBtn}
-                                contentStyle={styles.productBtnContent}
-                                labelStyle={styles.productBtnLabel}
-                                onPress={() => addToCart(product)}
-                            >
-                                {product.name}{'\n'}₹{product.price}
-                            </Button>
-                        ))}
+                        {filteredProducts.map(product => {
+                            const numColumns = width > 900 ? 3 : 2; // POS has a side menu, so 3 is usually max for comfortable grid
+                            const itemWidth = `${(100 / numColumns) - 2}%`;
+                            
+                            return (
+                                <TouchableOpacity 
+                                    key={product.id} 
+                                    style={[styles.productItem, { width: itemWidth }]}
+                                    onPress={() => addToCart(product)}
+                                    activeOpacity={0.7}
+                                >
+                                    <View style={styles.productImageContainer}>
+                                        {product.image ? (
+                                            <Image 
+                                                source={{ uri: product.image.startsWith('http') ? product.image : `${client.defaults.baseURL.replace('/api/', '')}${product.image}` }} 
+                                                style={styles.productImage} 
+                                            />
+                                        ) : (
+                                            <View style={styles.imagePlaceholderSmall}>
+                                                <Text style={styles.initials}>{product.name.charAt(0)}</Text>
+                                            </View>
+                                        )}
+                                    </View>
+                                    <View style={styles.productDetails}>
+                                        <Text style={styles.productNameSmall} numberOfLines={1}>{product.name}</Text>
+                                        <Text style={styles.productPriceSmall}>₹{product.price}</Text>
+                                    </View>
+                                </TouchableOpacity>
+                            );
+                        })}
                     </ScrollView>
                 </View>
 
@@ -210,19 +229,52 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
         justifyContent: 'flex-start',
     },
-    productBtn: {
-        margin: 5,
-        width: '30%',
-        height: 80,
-        justifyContent: 'center',
-        borderColor: '#D2691E'
+    productItem: {
+        aspectRatio: 1.1,
+        margin: '1%',
+        borderRadius: 12,
+        backgroundColor: '#fff',
+        borderWidth: 1,
+        borderColor: '#eee',
+        overflow: 'hidden',
+        elevation: 2,
     },
-    productBtnContent: {
+    productImageContainer: {
+        width: '100%',
+        height: '65%',
+        backgroundColor: '#f8f8f8',
+    },
+    productImage: {
+        width: '100%',
         height: '100%',
+        resizeMode: 'cover',
     },
-    productBtnLabel: {
-        textAlign: 'center',
-        fontSize: 14,
+    imagePlaceholderSmall: {
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#FFF7ED',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    initials: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#D2691E',
+    },
+    productDetails: {
+        padding: 6,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    productNameSmall: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#333',
+    },
+    productPriceSmall: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: '#D2691E',
     },
     billSide: {
         flex: 1,

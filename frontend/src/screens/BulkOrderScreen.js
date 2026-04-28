@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Appbar, TextInput, Button, Title, Paragraph } from 'react-native-paper';
 import client from '../api/client';
+import { useCart } from '../context/CartContext';
 
 const BulkOrderScreen = ({ onClose }) => {
+    const { selectedBranch } = useCart();
     const [notes, setNotes] = useState('');
     const [scheduleDate, setScheduleDate] = useState('');
     const [loading, setLoading] = useState(false);
@@ -17,6 +19,11 @@ const BulkOrderScreen = ({ onClose }) => {
             return;
         }
 
+        if (!selectedBranch) {
+            Alert.alert("Required", "Please select a branch first.");
+            return;
+        }
+
         setLoading(true);
         try {
             await client.post('orders/orders/', {
@@ -24,6 +31,7 @@ const BulkOrderScreen = ({ onClose }) => {
                 order_type: 'BULK',
                 total_amount: 0, // Manager will update the price and approve
                 payment_status: false,
+                branch: selectedBranch,
                 items: [], // Assume items will be processed from notes or added later by manager
                 bulk_details: {
                     schedule_date: `${scheduleDate}T12:00:00Z`, // basic ISO string
@@ -69,7 +77,7 @@ const BulkOrderScreen = ({ onClose }) => {
                     mode="outlined"
                     multiline
                     numberOfLines={6}
-                    style={styles.input}
+                    style={[styles.input, styles.multilineInput]}
                     placeholder="E.g., I need 500 chocolate cupcakes and 10 large customized cakes for a wedding..."
                 />
 
@@ -105,6 +113,10 @@ const styles = StyleSheet.create({
     },
     input: {
         marginBottom: 20,
+    },
+    multilineInput: {
+        minHeight: 120,
+        textAlignVertical: 'top',
     },
     button: {
         paddingVertical: 8,

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
     View, StyleSheet, Animated, Dimensions,
-    KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity
+    KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity, Image
 } from 'react-native';
 import { TextInput, Text, ActivityIndicator } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -10,14 +10,7 @@ import client from '../api/client';
 const { width, height } = Dimensions.get('window');
 const isWide = width > 768;
 
-const ROLE_HINTS = [
-    { role: 'Admin', username: 'admin_test', icon: '👑' },
-    { role: 'Manager', username: 'manager_test', icon: '👨‍💼' },
-    { role: 'Baker', username: 'baker_test', icon: '👨‍🍳' },
-    { role: 'Customer', username: 'customer_test', icon: '🛍️' },
-];
-
-const LoginScreen = ({ onLogin }) => {
+const LoginScreen = ({ onLogin, onShowRegister }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -50,15 +43,17 @@ const LoginScreen = ({ onLogin }) => {
     };
 
     const handleLogin = async () => {
-        if (!username.trim() || !password.trim()) {
-            setError('Please enter both username and password.');
+        const loginIdentifier = username.trim();
+
+        if (!loginIdentifier || !password.trim()) {
+            setError('Please enter both username/email and password.');
             shakeError();
             return;
         }
         setLoading(true);
         setError('');
         try {
-            const response = await client.post('token/', { username, password });
+            const response = await client.post('token/', { username: loginIdentifier, password });
             const { access, refresh } = response.data;
             await AsyncStorage.setItem('access_token', access);
             await AsyncStorage.setItem('refresh_token', refresh);
@@ -77,11 +72,6 @@ const LoginScreen = ({ onLogin }) => {
         }
     };
 
-    const quickFill = (hint) => {
-        setUsername(hint.username);
-        setPassword('password123');
-        setError('');
-    };
 
     return (
         <KeyboardAvoidingView
@@ -95,7 +85,11 @@ const LoginScreen = ({ onLogin }) => {
                     <View style={isWide ? styles.brandPanel : styles.brandPanelMobile}>
                         <Animated.View style={[styles.logoContainer, { transform: [{ scale: logoScaleAnim }], opacity: fadeAnim }]}>
                             <View style={styles.logoBadge}>
-                                <Text style={styles.logoEmoji}>🥐</Text>
+                                <Image
+                                    source={require('../../assets/logo.jpeg')}
+                                    style={styles.logoImage}
+                                    resizeMode="contain"
+                                />
                             </View>
                             <Text style={styles.brandName}>N3 Bakers</Text>
                             <Text style={styles.brandTagline}>Freshly baked. Masterfully managed.</Text>
@@ -134,25 +128,10 @@ const LoginScreen = ({ onLogin }) => {
                         <Text style={styles.formTitle}>Welcome back</Text>
                         <Text style={styles.formSubtitle}>Sign in to your workspace</Text>
 
-                        {/* Quick Fill Hints */}
-                        <View style={styles.hintsRow}>
-                            <Text style={styles.hintsLabel}>Quick fill:</Text>
-                            {ROLE_HINTS.map(hint => (
-                                <TouchableOpacity
-                                    key={hint.role}
-                                    style={styles.hintChip}
-                                    onPress={() => quickFill(hint)}
-                                    activeOpacity={0.7}
-                                >
-                                    <Text style={styles.hintChipText}>{hint.icon} {hint.role}</Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-
                         {/* Username */}
                         <View style={[styles.inputWrapper, focusedField === 'username' && styles.inputFocused]}>
                             <TextInput
-                                label="Username"
+                                label="Username or email"
                                 value={username}
                                 onChangeText={t => { setUsername(t); setError(''); }}
                                 mode="flat"
@@ -212,8 +191,12 @@ const LoginScreen = ({ onLogin }) => {
                                 <Text style={styles.loginBtnText}>Sign In →</Text>
                             )}
                         </TouchableOpacity>
-
-                        <Text style={styles.passwordHint}>Default password for test accounts: password123</Text>
+                        <View style={styles.footerRow}>
+                            <Text style={styles.footerText}>Need a customer account?</Text>
+                            <TouchableOpacity onPress={onShowRegister} activeOpacity={0.7}>
+                                <Text style={styles.footerLink}>Register</Text>
+                            </TouchableOpacity>
+                        </View>
                     </Animated.View>
                 </View>
             </ScrollView>
@@ -262,18 +245,23 @@ const styles = StyleSheet.create({
         marginBottom: 48,
     },
     logoBadge: {
-        width: 96,
-        height: 96,
-        borderRadius: 48,
-        backgroundColor: '#FFFFFF20',
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: '#FFFFFF',
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 20,
-        borderWidth: 2,
-        borderColor: '#FFFFFF40',
+        elevation: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        overflow: 'hidden'
     },
-    logoEmoji: {
-        fontSize: 48,
+    logoImage: {
+        width: '100%',
+        height: '100%',
     },
     brandName: {
         fontSize: 36,
@@ -291,6 +279,19 @@ const styles = StyleSheet.create({
     featureList: {
         width: '100%',
         maxWidth: 320,
+    },
+    featureItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 16,
+        backgroundColor: '#FFFFFF15',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        borderRadius: 12,
+    },
+    featureIcon: {
+        fontSize: 24,
+        marginRight: 14,
     },
     featureItem: {
         flexDirection: 'row',
@@ -337,33 +338,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#64748B',
         marginBottom: 28,
-    },
-
-    // Quick Fill Hints
-    hintsRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: 6,
-        marginBottom: 20,
-    },
-    hintsLabel: {
-        fontSize: 12,
-        color: '#94A3B8',
-        fontWeight: '600',
-    },
-    hintChip: {
-        backgroundColor: '#FFF7ED',
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#FED7AA',
-    },
-    hintChipText: {
-        fontSize: 12,
-        color: '#92400E',
-        fontWeight: '600',
     },
 
     // Inputs
@@ -423,11 +397,21 @@ const styles = StyleSheet.create({
         fontWeight: '800',
         letterSpacing: 0.5,
     },
-    passwordHint: {
+    footerRow: {
         marginTop: 20,
-        textAlign: 'center',
-        color: '#94A3B8',
-        fontSize: 12,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 6,
+    },
+    footerText: {
+        color: '#64748B',
+        fontSize: 14,
+    },
+    footerLink: {
+        color: '#D2691E',
+        fontSize: 14,
+        fontWeight: '700',
     },
 });
 

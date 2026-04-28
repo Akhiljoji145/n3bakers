@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from django.apps import apps
+from core.models import Branch
 from .models import Order, OrderItem, BulkOrder
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -17,10 +19,15 @@ class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True)
     bulk_details = BulkOrderSerializer(required=False)
     branch_name = serializers.CharField(source='branch.name', read_only=True)
+    branch = serializers.PrimaryKeyRelatedField(
+        queryset=Branch.objects.all(),
+        required=False
+    )
 
     class Meta:
         model = Order
         fields = ('id', 'user', 'branch', 'branch_name', 'status', 'order_type', 'total_amount', 'payment_status', 'items', 'bulk_details', 'created_at')
+        read_only_fields = ('user',)
 
     def create(self, validated_data):
         items_data = validated_data.pop('items')
