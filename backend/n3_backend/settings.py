@@ -78,9 +78,16 @@ WSGI_APPLICATION = "n3_backend.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+# If DATABASE_URL is set but looks invalid (like just '://'), clear it so we use the default
+if DATABASE_URL and (not "://" in DATABASE_URL or DATABASE_URL.startswith("://")):
+    DATABASE_URL = None
+
 DATABASES = {
     "default": dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        url=DATABASE_URL,
         conn_max_age=600,
     )
 }
