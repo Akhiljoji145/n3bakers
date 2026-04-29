@@ -30,7 +30,9 @@
       "package": "com.akhil145.n3bakers"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "static"
     },
     "plugins": [
       "expo-notifications",

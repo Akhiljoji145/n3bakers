@@ -1,0 +1,14 @@
+{
+  "buildCommand": "npm install && npx expo export --platform web",
+  "outputDirectory": "dist",
+  "framework": null,
+  "env": {
+    "EXPO_PUBLIC_API_URL": "https://n3bakers.onrender.com/api/"
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

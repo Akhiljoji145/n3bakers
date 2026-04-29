@@ -10,7 +10,7 @@ services:
     runtime: python
     rootDir: backend
     buildCommand: ./build.sh
-    startCommand: gunicorn n3_backend.wsgi:application
+    startCommand: gunicorn --bind 0.0.0.0:$PORT n3_backend.wsgi:application
     envVars:
       - key: DATABASE_URL
         fromDatabase:
