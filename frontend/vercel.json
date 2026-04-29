@@ -3,7 +3,7 @@
   "outputDirectory": "dist",
   "framework": null,
   "env": {
-    "EXPO_PUBLIC_API_URL": "https://n3bakers.onrender.com/api/"
+    "EXPO_PUBLIC_API_URL": "https://n3bakers-backend.onrender.com/api/"
   },
   "rewrites": [
     {
