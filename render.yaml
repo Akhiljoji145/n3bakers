@@ -9,7 +9,7 @@ services:
     name: n3bakers-backend
     runtime: python
     rootDir: backend
-    buildCommand: ./build.sh
+    buildCommand: bash ./build.sh
     startCommand: gunicorn --bind 0.0.0.0:$PORT n3_backend.wsgi:application
     envVars:
       - key: DATABASE_URL
