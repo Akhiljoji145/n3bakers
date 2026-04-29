@@ -1,6 +1,8 @@
 import os
 from django.core.management.base import BaseCommand
+from django.core.management.base import CommandError
 from django.contrib.auth import get_user_model
+from django.conf import settings
 
 from users.models import UserRole
 
@@ -13,7 +15,13 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         username = os.environ.get("ADMIN_USERNAME", "admin")
         email = os.environ.get("ADMIN_EMAIL", "admin@example.com")
-        password = os.environ.get("ADMIN_PASSWORD", "admin123")
+        password = os.environ.get("ADMIN_PASSWORD")
+
+        if not password:
+            if settings.DEBUG:
+                password = "admin123"
+            else:
+                raise CommandError("ADMIN_PASSWORD must be set when DEBUG is False.")
 
         user, created = User.objects.get_or_create(
             username=username,

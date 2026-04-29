@@ -14,32 +14,75 @@ import os
 from pathlib import Path
 
 import dj_database_url
+from django.core.exceptions import ImproperlyConfigured
+
+
+def env_flag(name, default):
+    value = os.environ.get(name)
+    if value is None:
+        return default
+
+    normalized = value.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    return default
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 RENDER_EXTERNAL_HOSTNAME = os.environ.get("RENDER_EXTERNAL_HOSTNAME")
+VERCEL_URL = os.environ.get("VERCEL_URL")
+VERCEL_BRANCH_URL = os.environ.get("VERCEL_BRANCH_URL")
+VERCEL_PROJECT_PRODUCTION_URL = os.environ.get("VERCEL_PROJECT_PRODUCTION_URL")
 IS_RENDER = "RENDER" in os.environ
+IS_VERCEL = any(os.environ.get(var) for var in ("VERCEL", "VERCEL_ENV", "VERCEL_URL"))
+IS_HOSTED = IS_RENDER or IS_VERCEL
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-6a)$_+p=*b82+$izg!@6q1c1*)lb^n#vml19a=!_7f0s&o3nll")
+DEFAULT_SECRET_KEY = "django-insecure-6a)$_+p=*b82+$izg!@6q1c1*)lb^n#vml19a=!_7f0s&o3nll"
+SECRET_KEY = (
+    os.environ.get("DJANGO_SECRET_KEY")
+    or os.environ.get("DJANGO_SECRET")
+    or os.environ.get("SECRET_KEY")
+    or DEFAULT_SECRET_KEY
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DEBUG", "False" if IS_RENDER else "True").lower() == "true"
+DEBUG = env_flag("DEBUG", default=not IS_HOSTED)
+
+if not DEBUG and SECRET_KEY == DEFAULT_SECRET_KEY:
+    raise ImproperlyConfigured(
+        "Set DJANGO_SECRET_KEY, DJANGO_SECRET, or SECRET_KEY when DEBUG is False."
+    )
 
 ALLOWED_HOSTS = ['*']
-if RENDER_EXTERNAL_HOSTNAME:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+for host in (
+    RENDER_EXTERNAL_HOSTNAME,
+    VERCEL_URL,
+    VERCEL_BRANCH_URL,
+    VERCEL_PROJECT_PRODUCTION_URL,
+):
+    if host:
+        ALLOWED_HOSTS.append(host)
 
 extra_allowed_hosts = os.environ.get("ALLOWED_HOSTS", "")
 ALLOWED_HOSTS.extend([host.strip() for host in extra_allowed_hosts.split(",") if host.strip()])
 
 CSRF_TRUSTED_ORIGINS = []
-if RENDER_EXTERNAL_HOSTNAME:
-    CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
+for host in (
+    RENDER_EXTERNAL_HOSTNAME,
+    VERCEL_URL,
+    VERCEL_BRANCH_URL,
+    VERCEL_PROJECT_PRODUCTION_URL,
+):
+    if host:
+        CSRF_TRUSTED_ORIGINS.append(f"https://{host}")
 
 extra_csrf_origins = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
 CSRF_TRUSTED_ORIGINS.extend([origin.strip() for origin in extra_csrf_origins.split(",") if origin.strip()])
@@ -167,7 +210,7 @@ STORAGES = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage" if IS_RENDER else "django.contrib.staticfiles.storage.StaticFilesStorage",
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage" if IS_HOSTED else "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
 
