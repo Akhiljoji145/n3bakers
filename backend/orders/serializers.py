@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.apps import apps
 from core.models import Branch
-from .models import Order, OrderItem, BulkOrder
+from .models import Order, OrderItem, BulkOrder, CustomOrder
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name', read_only=True)
@@ -15,9 +15,15 @@ class BulkOrderSerializer(serializers.ModelSerializer):
         model = BulkOrder
         fields = ('schedule_date', 'notes', 'is_approved')
 
+class CustomOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomOrder
+        fields = ('item_wanted', 'quantity', 'delivery_date', 'customer_name', 'customer_phone', 'price')
+
 class OrderSerializer(serializers.ModelSerializer):
-    items = OrderItemSerializer(many=True)
+    items = OrderItemSerializer(many=True, required=False)
     bulk_details = BulkOrderSerializer(required=False)
+    custom_details = CustomOrderSerializer(required=False)
     branch_name = serializers.CharField(source='branch.name', read_only=True)
     branch = serializers.PrimaryKeyRelatedField(
         queryset=Branch.objects.all(),
@@ -26,15 +32,18 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ('id', 'user', 'branch', 'branch_name', 'status', 'order_type', 'total_amount', 'payment_status', 'items', 'bulk_details', 'created_at')
+        fields = ('id', 'user', 'branch', 'branch_name', 'status', 'order_type', 'total_amount', 'payment_status', 'items', 'bulk_details', 'custom_details', 'created_at')
         read_only_fields = ('user',)
 
     def create(self, validated_data):
-        items_data = validated_data.pop('items')
+        items_data = validated_data.pop('items', [])
         bulk_data = validated_data.pop('bulk_details', None)
+        custom_data = validated_data.pop('custom_details', None)
         order = Order.objects.create(**validated_data)
         for item_data in items_data:
             OrderItem.objects.create(order=order, **item_data)
         if bulk_data:
             BulkOrder.objects.create(order=order, **bulk_data)
+        if custom_data:
+            CustomOrder.objects.create(order=order, **custom_data)
         return order

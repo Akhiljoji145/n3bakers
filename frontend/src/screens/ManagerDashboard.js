@@ -6,6 +6,7 @@ import { BottomNavigation, Appbar, Text, Icon, useTheme } from 'react-native-pap
 import OrderManagementScreen from './manager/OrderManagementScreen';
 import ManagerInventoryScreen from './manager/ManagerInventoryScreen';
 import ManagerReportsScreen from './manager/ManagerReportsScreen';
+import CustomOrderScreen from './manager/CustomOrderScreen';
 import NotificationCenter from './NotificationCenter';
 import useNotifications from '../hooks/useNotifications';
 import useAutoRefresh from '../hooks/useAutoRefresh';
@@ -20,6 +21,7 @@ const ManagerDashboard = ({ onLogout, user, activeRole, onSwitchRole }) => {
 
     const [routes] = useState([
         { key: 'orders', title: 'Orders', focusedIcon: 'clipboard-list' },
+        { key: 'custom', title: 'Custom', focusedIcon: 'pencil' },
         { key: 'inventory', title: 'Inventory', focusedIcon: 'warehouse' },
         { key: 'reports', title: 'Reports', focusedIcon: 'chart-bar' },
         { key: 'notifications', title: 'Alerts', focusedIcon: 'bell' },
@@ -27,6 +29,7 @@ const ManagerDashboard = ({ onLogout, user, activeRole, onSwitchRole }) => {
 
     const renderScene = BottomNavigation.SceneMap({
         orders: () => <OrderManagementScreen />,
+        custom: () => <CustomOrderScreen />,
         inventory: () => <ManagerInventoryScreen />,
         reports: () => <ManagerReportsScreen />,
         notifications: () => <NotificationCenter />,

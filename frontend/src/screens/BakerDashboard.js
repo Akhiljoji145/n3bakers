@@ -113,8 +113,12 @@ const BakerDashboard = ({ onLogout, user, activeRole, onSwitchRole }) => {
                     orders.map(order => (
                         <List.Accordion
                             key={order.id}
-                            title={`Order #${order.id}`}
-                            description={order.items?.map(i => `${i.product_name} x ${i.quantity}`).join(', ') || 'No items'}
+                            title={`Order #${order.id}${order.order_type === 'CUSTOM' ? '  [CUSTOM]' : ''}`}
+                            description={
+                                order.order_type === 'CUSTOM' && order.custom_details
+                                    ? `Custom: ${order.custom_details.item_wanted} x ${order.custom_details.quantity} — Due: ${new Date(order.custom_details.delivery_date).toLocaleDateString()}`
+                                    : (order.items?.map(i => `${i.product_name} x ${i.quantity}`).join(', ') || 'No items')
+                            }
                             left={props => (
                                 <View style={styles.statusBox}>
                                     <View style={[styles.statusDot, { backgroundColor: getStatusColor(order.status) }]} />
@@ -125,16 +129,37 @@ const BakerDashboard = ({ onLogout, user, activeRole, onSwitchRole }) => {
                         >
                             <View style={styles.detailsBox}>
                                 <View style={styles.itemsList}>
-                                    <Text style={styles.detailsLabel}>Ingredients / Products to Prepare:</Text>
+                                    <Text style={styles.detailsLabel}>{order.order_type === 'CUSTOM' ? 'Custom Order Details:' : 'Ingredients / Products to Prepare:'}</Text>
                                     <Divider style={styles.itemDivider} />
-                                    {(order.items || []).map((item, idx) => (
-                                        <View key={idx} style={styles.itemRow}>
-                                            <Icon source="circle-medium" size={20} color="#D2691E" />
-                                            <Text style={styles.itemText}>
-                                                <Text style={styles.qtyText}>{item.quantity}x</Text> {item.product_name || `Product #${item.product}`}
-                                            </Text>
+                                    {order.order_type === 'CUSTOM' && order.custom_details ? (
+                                        <View>
+                                            <View style={styles.itemRow}>
+                                                <Icon source="circle-medium" size={20} color="#D2691E" />
+                                                <Text style={styles.itemText}><Text style={styles.qtyText}>Item:</Text> {order.custom_details.item_wanted}</Text>
+                                            </View>
+                                            <View style={styles.itemRow}>
+                                                <Icon source="circle-medium" size={20} color="#D2691E" />
+                                                <Text style={styles.itemText}><Text style={styles.qtyText}>Qty:</Text> {order.custom_details.quantity} units</Text>
+                                            </View>
+                                            <View style={styles.itemRow}>
+                                                <Icon source="circle-medium" size={20} color="#D2691E" />
+                                                <Text style={styles.itemText}><Text style={styles.qtyText}>Deliver by:</Text> {new Date(order.custom_details.delivery_date).toLocaleString()}</Text>
+                                            </View>
+                                            <View style={styles.itemRow}>
+                                                <Icon source="circle-medium" size={20} color="#D2691E" />
+                                                <Text style={styles.itemText}><Text style={styles.qtyText}>Customer:</Text> {order.custom_details.customer_name}{order.custom_details.customer_phone ? ` (${order.custom_details.customer_phone})` : ''}</Text>
+                                            </View>
                                         </View>
-                                    ))}
+                                    ) : (
+                                        (order.items || []).map((item, idx) => (
+                                            <View key={idx} style={styles.itemRow}>
+                                                <Icon source="circle-medium" size={20} color="#D2691E" />
+                                                <Text style={styles.itemText}>
+                                                    <Text style={styles.qtyText}>{item.quantity}x</Text> {item.product_name || `Product #${item.product}`}
+                                                </Text>
+                                            </View>
+                                        ))
+                                    )}
                                 </View>
 
                                 <View style={styles.actions}>

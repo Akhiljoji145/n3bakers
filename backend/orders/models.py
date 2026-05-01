@@ -13,6 +13,7 @@ class OrderType(models.TextChoices):
     POS = 'POS', 'POS Billing'
     ONLINE = 'ONLINE', 'Online Order'
     BULK = 'BULK', 'Bulk Order'
+    CUSTOM = 'CUSTOM', 'Custom Order'
 
 class Order(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='orders')
@@ -44,3 +45,15 @@ class BulkOrder(models.Model):
 
     def __str__(self):
         return f"Bulk Details for Order #{self.order.id}"
+
+class CustomOrder(models.Model):
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='custom_details')
+    item_wanted = models.CharField(max_length=255)
+    quantity = models.PositiveIntegerField(default=1)
+    delivery_date = models.DateTimeField()
+    customer_name = models.CharField(max_length=100)
+    customer_phone = models.CharField(max_length=20, blank=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+
+    def __str__(self):
+        return f"Custom Details for Order #{self.order.id}"

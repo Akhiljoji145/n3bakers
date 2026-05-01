@@ -37,7 +37,8 @@ class OrderViewSet(viewsets.ModelViewSet):
             self._notify_new_order(order)
 
         # Reserve stock as soon as an order is placed; repeat deductions are ignored.
-        if order.order_type != 'BULK':
+        # CUSTOM orders don't map to standard products so skip inventory deduction.
+        if order.order_type not in ('BULK', 'CUSTOM'):
             deduct_inventory_for_order(order)
 
     def perform_update(self, serializer):
@@ -45,7 +46,7 @@ class OrderViewSet(viewsets.ModelViewSet):
         order = serializer.save()
         
         # Deduct inventory when baker starts preparing (if not already deducted by POS)
-        if order.status == 'PREPARING' and old_status == 'PENDING' and order.order_type != 'POS':
+        if order.status == 'PREPARING' and old_status == 'PENDING' and order.order_type not in ('POS', 'CUSTOM'):
             deduct_inventory_for_order(order)
             
         if order.status != old_status:

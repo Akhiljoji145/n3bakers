@@ -1,7 +1,7 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const configuredApiBaseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000/api/';
+const configuredApiBaseUrl = process.env.EXPO_PUBLIC_API_URL || 'https://joji145.pythonanywhere.com/api/';
 const API_BASE_URL = configuredApiBaseUrl.endsWith('/') ? configuredApiBaseUrl : `${configuredApiBaseUrl}/`;
 
 const client = axios.create({

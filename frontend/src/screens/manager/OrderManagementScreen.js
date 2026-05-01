@@ -88,7 +88,11 @@ const OrderManagementScreen = () => {
                             <List.Accordion
                                 key={order.id}
                                 title={`Order #${order.id} - ₹${order.total_amount}`}
-                                description={(order.items || []).map(i => `${i.product_name} x ${i.quantity}`).join(', ') || 'No items'}
+                                description={
+                                    order.order_type === 'CUSTOM' && order.custom_details 
+                                        ? `Custom: ${order.custom_details.item_wanted} x ${order.custom_details.quantity}`
+                                        : ((order.items || []).map(i => `${i.product_name} x ${i.quantity}`).join(', ') || 'No items')
+                                }
                                 left={props => <View style={styles.iconBox}><Icon source="receipt" size={24} color="#64748B" /></View>}
                                 style={[styles.accordion, { borderLeftColor: getStatusColor(order.status) }]}
                                 titleStyle={styles.orderTitle}
@@ -106,7 +110,14 @@ const OrderManagementScreen = () => {
                                     
                                     <View style={styles.itemsList}>
                                         <Text style={[styles.detailText, { marginBottom: 4, fontWeight: 'bold' }]}>Order Items:</Text>
-                                        {(order.items || []).length === 0 ? (
+                                        {order.order_type === 'CUSTOM' && order.custom_details ? (
+                                            <View>
+                                                <Text style={styles.itemRow}>• Item: {order.custom_details.item_wanted}</Text>
+                                                <Text style={styles.itemRow}>• Quantity: {order.custom_details.quantity}</Text>
+                                                <Text style={styles.itemRow}>• Delivery: {new Date(order.custom_details.delivery_date).toLocaleString()}</Text>
+                                                <Text style={styles.itemRow}>• Customer: {order.custom_details.customer_name} {order.custom_details.customer_phone ? `(${order.custom_details.customer_phone})` : ''}</Text>
+                                            </View>
+                                        ) : (order.items || []).length === 0 ? (
                                             <Text style={styles.itemRow}>No items attached to this order.</Text>
                                         ) : (
                                             (order.items || []).map((item, idx) => (
